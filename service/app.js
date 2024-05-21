@@ -1,47 +1,33 @@
 const express = require('express');
-const { JSDOM } = require('jsdom');
 const puppeteer = require('puppeteer');
-const { Square, Circle, Line } = require('./shapes');
+const bodyParser = require('body-parser');
+const { JSDOM } = require('jsdom');
+
+const Square = require('./shapes/Square')
+const Circle = require('./shapes/Circle')
+const Line = require('./shapes/Line')
+const { importShapes, exportShapes } = require('./shapes/import')
 
 const app = express();
 const PORT = 3000;
 
+app.use(bodyParser.json());
+
 app.get('/generate-image', async (req, res) => {
     try {
-        // Create shapes
-        const square = new Square(100, 'blue', 50, 50);
-        const circle = new Circle(50, 'red', 200, 200);
-        const line = new Line(100, 100, 250, 250, 'green', 5);
+        const shapes = [
+            new Square(100, 'blue', 50, 50),
+            new Circle(50, 'red', 200, 200),
+            new Line(50, 50, 200, 200, 'green', 5)
+        ];
 
-        // Render shapes to HTML
-        const dom = new JSDOM();
+        const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
         const document = dom.window.document;
+        shapes.forEach(shape => {
+            document.body.appendChild(shape.render(document));
+        });
 
-        document.body.appendChild(square.render());
-        document.body.appendChild(circle.render());
-        document.body.appendChild(line.render());
-
-        const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Test Image</title>
-            <style>
-                body {
-                    margin: 0;
-                    position: relative;
-                    width: 100vw;
-                    height: 100vh;
-                }
-            </style>
-        </head>
-        <body>
-            ${document.body.innerHTML}
-        </body>
-        </html>
-        `;
+        const htmlContent = dom.serialize();
 
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
@@ -55,6 +41,31 @@ app.get('/generate-image', async (req, res) => {
         res.send(screenshotBuffer);
     } catch (error) {
         console.error('Error generating image:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.post('/import-shapes', async (req, res) => {
+    try {
+        const jsonData = req.body.jsonData;
+        const shapes = importShapes(jsonData);
+        res.json({ message: 'Shapes imported successfully', shapes: exportShapes(shapes) });
+    } catch (error) {
+        console.error('Error importing shapes:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.get('/export-shapes', (req, res) => {
+    try {
+        const shapes = [
+            new Square(100, 'blue', 50, 50),
+            new Circle(50, 'red', 200, 200),
+            new Line(50, 50, 200, 200, 'green', 5)
+        ];
+        res.json(exportShapes(shapes));
+    } catch (error) {
+        console.error('Error exporting shapes:', error);
         res.status(500).send('Internal Server Error');
     }
 });
