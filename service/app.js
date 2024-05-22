@@ -1,30 +1,60 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
-const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
-
-const Square = require('./shapes/Square')
-const Circle = require('./shapes/Circle')
-const Line = require('./shapes/Line')
-const { importShapes, exportShapes } = require('./shapes/import')
+const { Square, Circle, Line } = require('./shapes');
 
 const app = express();
 const PORT = 3000;
 
-app.use(bodyParser.json());
+app.use(express.json());
 
-app.get('/generate-image', async (req, res) => {
+app.post('/generate-image', async (req, res) => {
+    const schema = req.body;
+
+    const dom = new JSDOM(`<!DOCTYPE html><html><head><style>
+    body { margin: 0; position: relative; width: 100vw; height: 100vh; }
+    </style></head><body></body></html>`);
+    const document = dom.window.document;
+
+    const elements = {};
+
     try {
-        const shapes = [
-            new Square(100, 'blue', 50, 50),
-            new Circle(50, 'red', 200, 200),
-            new Line(50, 50, 200, 200, 'green', 5)
-        ];
+        // Create shapes
+        schema.shapes.forEach(shape => {
+            let element;
+            if (shape.type === 'Square') {
+                element = new Square(shape.width, shape.color, shape.x, shape.y, shape.id, shape.text, shape.textColor).render();
+            } else if (shape.type === 'Circle') {
+                element = new Circle(shape.width, shape.color, shape.x, shape.y, shape.id, shape.text, shape.textColor).render();
+            } else {
+                throw new Error('Invalid shape type');
+            }
+            document.body.appendChild(element);
+            elements[shape.id] = {
+                element,
+                x: shape.x,
+                y: shape.y,
+                width: shape.width,
+                height: shape.height || shape.width  // assuming height is same as width for circles
+            };
+        });
 
-        const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-        const document = dom.window.document;
-        shapes.forEach(shape => {
-            document.body.appendChild(shape.render(document));
+        // Create lines
+        schema.lines.forEach(line => {
+            const fromElement = elements[line.fromId];
+            const toElement = elements[line.toId];
+
+            if (!fromElement || !toElement) {
+                throw new Error('Invalid shape IDs provided for Line.');
+            }
+
+            const lineElement = new Line(
+                fromElement.x, fromElement.y, fromElement.width, fromElement.height,
+                toElement.x, toElement.y, toElement.width, toElement.height,
+                line.color
+            ).render(document);
+
+            document.body.appendChild(lineElement);
         });
 
         const htmlContent = dom.serialize();
@@ -41,31 +71,6 @@ app.get('/generate-image', async (req, res) => {
         res.send(screenshotBuffer);
     } catch (error) {
         console.error('Error generating image:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-app.post('/import-shapes', async (req, res) => {
-    try {
-        const jsonData = req.body.jsonData;
-        const shapes = importShapes(jsonData);
-        res.json({ message: 'Shapes imported successfully', shapes: exportShapes(shapes) });
-    } catch (error) {
-        console.error('Error importing shapes:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-app.get('/export-shapes', (req, res) => {
-    try {
-        const shapes = [
-            new Square(100, 'blue', 50, 50),
-            new Circle(50, 'red', 200, 200),
-            new Line(50, 50, 200, 200, 'green', 5)
-        ];
-        res.json(exportShapes(shapes));
-    } catch (error) {
-        console.error('Error exporting shapes:', error);
         res.status(500).send('Internal Server Error');
     }
 });
