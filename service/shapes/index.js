@@ -2,14 +2,13 @@
 const { JSDOM } = require('jsdom');
 
 class Shape {
-    constructor(width, height, x, y, id, text, textColor) {
+    constructor(width, height, x, y, id, text) {
         this.width = width;
         this.height = height;
         this.x = x;
         this.y = y;
         this.id = id;
         this.text = text;
-        this.textColor = textColor;
     }
 
     render() {
@@ -33,7 +32,6 @@ class Shape {
             const textNode = document.createElement('div');
             textNode.style.pointerEvents = 'none';
             textNode.style.padding = '5px';
-            textNode.style.color = this.textColor;
             textNode.innerHTML = this.text;
             div.appendChild(textNode);
         }
@@ -43,8 +41,8 @@ class Shape {
 }
 
 class Square extends Shape {
-    constructor(size, color, x, y, id, text, textColor) {
-        super(size, size, x, y, id, text, textColor);
+    constructor(size, color, x, y, id, text) {
+        super(size, size, x, y, id, text);
         this.color = color;
     }
 
@@ -56,8 +54,22 @@ class Square extends Shape {
 }
 
 class Circle extends Shape {
-    constructor(diameter, color, x, y, id, text, textColor) {
-        super(diameter, diameter, x, y, id, text, textColor);
+    constructor(diameter, color, x, y, id, text) {
+        super(diameter, diameter, x, y, id, text);
+        this.color = color;
+    }
+
+    render() {
+        const div = super.render();
+        div.style.backgroundColor = this.color;
+        div.style.borderRadius = '50%';
+        return div;
+    }
+}
+
+class Oval extends Shape {
+    constructor(width, height, color, x, y, id, text) {
+        super(width, height, x, y, id, text);
         this.color = color;
     }
 
@@ -107,4 +119,4 @@ class Line {
     }
 }
 
-module.exports = { Shape, Square, Circle, Line };
+module.exports = { Shape, Square, Circle, Oval, Line };

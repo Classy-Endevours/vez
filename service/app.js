@@ -1,7 +1,7 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const { JSDOM } = require('jsdom');
-const { Square, Circle, Line } = require('./shapes');
+const { Square, Circle, Line, Oval } = require('./shapes');
 
 const app = express();
 const PORT = 3000;
@@ -26,6 +26,8 @@ app.post('/generate-image', async (req, res) => {
                 element = new Square(shape.width, shape.color, shape.x, shape.y, shape.id, shape.text, shape.textColor).render();
             } else if (shape.type === 'Circle') {
                 element = new Circle(shape.width, shape.color, shape.x, shape.y, shape.id, shape.text, shape.textColor).render();
+            } else if (shape.type === 'Oval') {
+                element = new Oval(shape.width, shape.height, shape.color, shape.x, shape.y, shape.id, shape.text).render();
             } else {
                 throw new Error('Invalid shape type');
             }
