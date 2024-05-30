@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsdom": "^24.0.0",
+    "morgan": "^1.10.0",
     "puppeteer": "^22.9.0",
     "text-generator": "^0.2.2"
   }

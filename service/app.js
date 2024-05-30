@@ -1,11 +1,15 @@
 const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
 const puppeteer = require('puppeteer');
 const { JSDOM } = require('jsdom');
 const { Square, Circle, Line, Oval } = require('./shapes');
 
 const app = express();
-const PORT = 3000;
+const PORT = 80;
 
+app.use(cors());
+app.use(morgan('tiny'));
 app.use(express.json());
 
 app.post('/generate-image', async (req, res) => {
