@@ -9,7 +9,8 @@ const PORT = 3000;
 app.use(express.json());
 
 app.post('/generate-image', async (req, res) => {
-    const schema = req.body;
+    try {
+        const schema = req.body;
 
     const dom = new JSDOM(`<!DOCTYPE html><html><head><style>
     body { margin: 0; position: relative; width: 100vw; height: 100vh; }
@@ -18,7 +19,6 @@ app.post('/generate-image', async (req, res) => {
 
     const elements = {};
 
-    try {
         // Create shapes
         schema.shapes.forEach(shape => {
             let element;
@@ -76,6 +76,8 @@ app.post('/generate-image', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+app.get('/', (req, res) => res.json({ message: 'express server running' }))
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
